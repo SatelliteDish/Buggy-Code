@@ -1,0 +1,127 @@
+[SerializeField]int[] price;
+[SerializeField]TextMeshProUGUI[] priceText;
+[SerializeField]GameObject shopCanvas;
+[SerializeField]GameObject unlockCanvas;
+[SerializeField]GameObject mainCanvas;
+[SerializeField]Canvas prizeCanvas;
+[SerializeField]Image prizeIcon;
+[SerializeField]GameObject[] unlockBoxes;
+[SerializeField]Color32[] boxColors;
+[SerializeField]Color32[] rarityColors;
+[SerializeField]float[] basicRarities;
+[SerializeField]TextMeshProUGUI[] basicRaritiesText;
+[SerializeField]float[] deluxeRarities;
+[SerializeField]TextMeshProUGUI[] deluxeRaritiesText;
+[SerializeField]float[] proRarities;
+[SerializeField]TextMeshProUGUI[] proRaritiesText;
+CurrencyTracker currencyTracker;
+CosmeticsCatalogue cosmeticsCatalogue;
+[SerializeField]Button boxSprite;
+[SerializeField]string[] rarityNames;
+public int[] commonAccessories;
+public int[] rareAccessories;
+public int[] epicAccessories;
+public int[] legendaryAccessories;
+public int[] commonPatterns;
+public int[] rarePatterns;
+public int[] epicPatterns;
+public int[] legendaryPatterns;
+[SerializeField] int cosmeticWon;
+[SerializeField]bool isAccessory;
+[SerializeField]string cosmeticType;
+CosmeticPicker cosmeticPicker;
+
+    void Awake() 
+    {
+        currencyTracker = FindObjectOfType<CurrencyTracker>();
+        cosmeticsCatalogue = FindObjectOfType<CosmeticsCatalogue>();
+        cosmeticPicker = FindObjectOfType<CosmeticPicker>();
+        unlockCanvas.gameObject.SetActive(false);
+        prizeCanvas.gameObject.SetActive(false);
+    }
+    void Start()
+    {
+        
+        //sets price
+        for(int i = 0; i < priceText.Length; i++)
+        {priceText[i].text = price[i].ToString();}
+        //sets rarity
+        for(int i = 0; i < basicRarities.Length; i++)
+        {
+            basicRaritiesText[i].text = basicRarities[i].ToString() + "% " + rarityNames[i];
+            deluxeRaritiesText[i].text = deluxeRarities[i].ToString() + "% " + rarityNames[i];
+            proRaritiesText[i].text = proRarities[i].ToString() + "% " + rarityNames[i];;
+        }
+        for(int i = 0; i < basicRarities.Length; i ++)
+        {
+            basicRaritiesText[i].color = rarityColors[i];
+            deluxeRaritiesText[i].color = rarityColors[i];
+            proRaritiesText[i].color = rarityColors[i];
+        }
+    }
+
+    public void OnPurchase(int index)
+    {
+        if(currencyTracker.ReturnCurrencyCount() - price[index] < 0)
+        {Debug.LogError("OUT OF MONEY"); return;}
+        cosmeticPicker.UpdatePackageSelection(index);
+        currencyTracker.UpdateCurrencyCount(price[index]);
+        shopCanvas.gameObject.SetActive(false);
+        unlockCanvas.gameObject.SetActive(true);
+        for(int i = 0; i < unlockBoxes.Length; i++)
+        {
+            var box = Instantiate(boxSprite, new Vector3(unlockBoxes[i].transform.position.x, unlockBoxes[i].transform.position.y,0), Quaternion.identity);
+            box.gameObject.transform.SetParent(unlockBoxes[i].transform);
+            box.gameObject.GetComponent<Image>().color = boxColors[Random.Range(0, boxColors.Length)];
+        }
+        
+    }
+    public void UpdateAccessoryWon(int index)
+    {
+        cosmeticWon =  index;
+        isAccessory = true;
+        Debug.Log("Accessory " + cosmeticWon);
+    }
+    public void UpdatePatternWon(int index)
+    {
+        cosmeticWon =  index;
+        isAccessory = false;
+        Debug.Log("Pattern " + cosmeticWon);
+    }
+    void UpdateCosmeticType(bool accessory)
+    {
+        if(accessory == true)
+        {cosmeticType = "accessory";}
+        if(accessory == false)
+        {cosmeticType = "pattern";}
+        Debug.Log(cosmeticType);
+    }
+    public void OnUnlock()
+    {
+        Debug.Log(cosmeticPicker.ReturnCosmeticWon());
+        prizeCanvas.gameObject.SetActive(true);
+        for(int i = 0; i < unlockBoxes.Length; i++)
+        {
+            unlockBoxes[i].gameObject.SetActive(false);
+        }
+        if(cosmeticPicker.ReturnIsAccessory())
+        {
+            prizeIcon.GetComponent<Image>().sprite = cosmeticsCatalogue.ReturnAccessoryIcon(cosmeticWon);
+        }
+        if(!cosmeticPicker.ReturnIsAccessory())
+        {
+            prizeIcon.sprite = cosmeticsCatalogue.ReturnPatternIcon(cosmeticWon);
+        }
+    }
+    public float ReturnBasicRarities(int index)
+    {
+        return basicRarities[index];
+    }
+    public float ReturnDeluxeRarities(int index)
+    {
+        return deluxeRarities[index];
+    }
+    public float ReturnProRarities(int index)
+    {
+        return proRarities[index];
+    }
